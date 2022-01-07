@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
+using SharpDX.D3DCompiler;
 using Veldrid;
+using Veldrid.SPIRV;
 
 namespace dynshadertoy
 {
@@ -18,7 +21,7 @@ namespace dynshadertoy
             public Matrix4x4 projection;
         };
 
-        public Veldrid.GraphicsDevice InitializeGraphicsDevice()
+        private Veldrid.GraphicsDevice InitializeGraphicsDevice()
         {
             //create graphics device.
             var options = new Veldrid.GraphicsDeviceOptions()
@@ -36,7 +39,7 @@ namespace dynshadertoy
             return gd;
         }
 
-        public IEnumerable<Vector4> GenerateRandomTestScene()
+        private IEnumerable<Vector4> GenerateRandomTestScene()
         {
             Console.WriteLine("Generating a random scene");
             var rand = new Random();
@@ -56,7 +59,7 @@ namespace dynshadertoy
             return triangleData;
         }
 
-        public ShaderSetDescription CompileTestShaders(Veldrid.GraphicsDevice gd)
+        private (ShaderSetDescription shaders , ResourceLayout resourcelayout ) CompileTestShaders(Veldrid.GraphicsDevice gd)
         {
             var vertexShaderSource = @"
 /////////////
@@ -123,31 +126,87 @@ float4 ColorPixelShader(PixelInputType input) : SV_TARGET
             var pd = new Veldrid.ShaderDescription(Veldrid.ShaderStages.Fragment, Encoding.ASCII.GetBytes(pixelShaderSource), "ColorPixelShader");
             var fragShader = gd.ResourceFactory.CreateShader(pd);
 
+            var vertshadercomp = SharpDX.D3DCompiler.ShaderBytecode.Compile(vertexShaderSource, "ColorVertexShader", "vs_4_0", SharpDX.D3DCompiler.ShaderFlags.None, SharpDX.D3DCompiler.EffectFlags.None, "vert");
+
+
+            SharpDX.D3DCompiler.ShaderReflection sr = new SharpDX.D3DCompiler.ShaderReflection(vertshadercomp.Bytecode);
+            var outputvertexElementDescriptions = new List<VertexElementDescription>();
+            for (int i = 0; i < sr.Description.InputParameters; i++)
+            {
+                var inputparam = sr.GetInputParameterDescription(i);
+                outputvertexElementDescriptions.Add(new VertexElementDescription(inputparam.SemanticName,
+                    (VertexElementSemantic)Enum.Parse(typeof(VertexElementSemantic),inputparam.SemanticName,true),
+                    DetermineFormatFromVertexInputParam(inputparam)));
+                
+            }
+
 
 
             //create shader layouts.
-            var vertlayout = new VertexLayoutDescription(
+            var vertlayout = new VertexLayoutDescription(outputvertexElementDescriptions.ToArray()); /*new VertexLayoutDescription(
               new VertexElementDescription("position", VertexElementSemantic.Position, VertexElementFormat.Float4),
               new VertexElementDescription("color", VertexElementSemantic.Color, VertexElementFormat.Float4,16));
+                */
+            var outputResourceElements = new List<ResourceLayoutElementDescription>();
+            for (int i = 0; i < sr.Description.ConstantBuffers; i++)
+            {
+                var cb = sr.GetConstantBuffer(i);
+                //TODO for now we only support cubuffers....
+                //TODO we're only parsing vertex shaders so the stage is always vertex.
+                //TODO support a different flow for compute shaders...
+                outputResourceElements.Add(new ResourceLayoutElementDescription(cb.Description.Name, ResourceKind.UniformBuffer, ShaderStages.Vertex));
 
-             return new ShaderSetDescription(new[] { vertlayout }, new[] { vertShader, fragShader });
+            }
+            //setup buffer we'll pack with all our data.
+            var reslayout = gd.ResourceFactory.CreateResourceLayout(new ResourceLayoutDescription(outputResourceElements.ToArray()));
 
+            return (new ShaderSetDescription(new[] { vertlayout }, new[] { vertShader, fragShader }), reslayout);
+
+        }
+
+        private VertexElementFormat DetermineFormatFromVertexInputParam(ShaderParameterDescription paramDesc)
+        {
+            // determine DXGI format
+            if ((int)paramDesc.UsageMask == 1)
+            {
+                if (paramDesc.ComponentType == RegisterComponentType.UInt32) return VertexElementFormat.UInt1;
+                else if (paramDesc.ComponentType == RegisterComponentType.SInt32) return VertexElementFormat.Int1;
+                else if (paramDesc.ComponentType == RegisterComponentType.Float32) return VertexElementFormat.Float1;
+            }
+            else if ((int)paramDesc.UsageMask <= 3)
+            {
+                if (paramDesc.ComponentType == RegisterComponentType.UInt32) return VertexElementFormat.UInt2;
+                else if (paramDesc.ComponentType == RegisterComponentType.SInt32) return VertexElementFormat.Int2;
+                else if (paramDesc.ComponentType == RegisterComponentType.Float32) return VertexElementFormat.Float2;
+            }
+            else if ((int)paramDesc.UsageMask <= 7)
+            {
+                if (paramDesc.ComponentType == RegisterComponentType.UInt32) return VertexElementFormat.UInt3;
+                else if (paramDesc.ComponentType == RegisterComponentType.SInt32) return VertexElementFormat.Int3;
+                else if (paramDesc.ComponentType == RegisterComponentType.Float32) return VertexElementFormat.Float3;
+            }
+            else if ((int)paramDesc.UsageMask <= 15)
+            {
+                if (paramDesc.ComponentType == RegisterComponentType.UInt32) return VertexElementFormat.UInt4;
+                else if (paramDesc.ComponentType == RegisterComponentType.SInt32) return VertexElementFormat.Int4;
+                else if (paramDesc.ComponentType == RegisterComponentType.Float32) return VertexElementFormat.Float4;
+            }
+            throw new Exception ("could not determine format of input param");
+            return new VertexElementFormat();
         }
 
         public byte[] Test(uint width,uint height)
         {
             var gd = InitializeGraphicsDevice();
-            var shaders = CompileTestShaders(gd);
+            var resourcedata = CompileTestShaders(gd);
             var scene = GenerateRandomTestScene();
 
             var vertexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(scene.Count() *16), BufferUsage.VertexBuffer));
 
-            //setup buffer we'll pack with all our data.
-            var reslayout = gd.ResourceFactory.CreateResourceLayout(new ResourceLayoutDescription(
-                new ResourceLayoutElementDescription("UBO", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
+          
             var _uniformBuffers_vs = gd.ResourceFactory.CreateBuffer(new BufferDescription(4 * 16 * 4*100, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 
-            var resourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(reslayout, _uniformBuffers_vs));
+            var resourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(resourcedata.resourcelayout, _uniformBuffers_vs));
 
             //create target textures for offscreen rendering.
             var offscreenColor = gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
@@ -168,8 +227,8 @@ float4 ColorPixelShader(PixelInputType input) : SV_TARGET
                 DepthStencilStateDescription.DepthOnlyLessEqual,
                 new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
                 PrimitiveTopology.TriangleList,
-                shaders,
-                reslayout,
+                resourcedata.shaders,
+                resourcedata.resourcelayout,
                 framebuffer.OutputDescription);
 
             var pipeline = gd.ResourceFactory.CreateGraphicsPipeline(ref graphicsPipelineDes);
