@@ -51,9 +51,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\dynshadertoy\dynshadertoy.csproj">
+    <ProjectReference Include="..\dynshadertoy\shadertoyCore.csproj">
       <Project>{376c0aa0-7c9d-4b88-be9d-b1e3525c78db}</Project>
-      <Name>dynshadertoy</Name>
+      <Name>shadertoyCore</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

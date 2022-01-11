@@ -12,7 +12,7 @@ using Veldrid.SPIRV;
 
 namespace dynshadertoy
 {
-    public class shadertoy
+    public class ShaderToy
     {
         public struct MatrixBufferType
         {
@@ -21,7 +21,7 @@ namespace dynshadertoy
             public Matrix4x4 projection;
         };
 
-        private Veldrid.GraphicsDevice InitializeGraphicsDevice()
+        public static Veldrid.GraphicsDevice InitializeGraphicsDevice()
         {
             //create graphics device.
             var options = new Veldrid.GraphicsDeviceOptions()
@@ -32,8 +32,8 @@ namespace dynshadertoy
             };
 
             var gd = Veldrid.GraphicsDevice.CreateD3D11(options);
-            Veldrid.BackendInfoVulkan info;
-            gd.GetVulkanInfo(out info);
+            Veldrid.BackendInfoD3D11 info;
+            gd.GetD3D11Info(out info);
             Debug.Assert(gd.Features.ComputeShader);
             Console.WriteLine("this graphics device supports compute shaders - yay");
             return gd;
@@ -59,76 +59,21 @@ namespace dynshadertoy
             return triangleData;
         }
 
-        private (ShaderSetDescription shaders , ResourceLayout resourcelayout ) CompileTestShaders(Veldrid.GraphicsDevice gd)
-        {
-            var vertexShaderSource = @"
-/////////////
-// GLOBALS //
-/////////////
-cbuffer MatrixBuffer
-{
-    matrix worldMatrix;
-    matrix viewMatrix;
-    matrix projectionMatrix;
-};
-//////////////
-// TYPEDEFS //
-//////////////
-struct VertexInputType
-{
-    float4 position : POSITION;
-    float4 color : COLOR;
-};
-
-struct PixelInputType
-{
-    float4 position : SV_POSITION;
-    float4 color : COLOR;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-// Vertex Shader
-////////////////////////////////////////////////////////////////////////////////
-PixelInputType ColorVertexShader(VertexInputType input)
-{
-    PixelInputType output;
-    
 
 
-    // Calculate the position of the vertex against the world, view, and projection matrices.
-   output.position = mul(input.position, worldMatrix);
-   output.position = mul(output.position, viewMatrix);
-   output.position = mul(output.position, projectionMatrix);
-    // Store the input color for the pixel shader to use.
-    output.color = input.color;
-    return output;
-}
 
-";
-            var pixelShaderSource = @"
-struct PixelInputType
-{
-    float4 position : SV_POSITION;
-    float4 color : COLOR;
-};
-////////////////////////////////////////////////////////////////////////////////
-// Pixel Shader
-////////////////////////////////////////////////////////////////////////////////
-float4 ColorPixelShader(PixelInputType input) : SV_TARGET
-{
-    return input.color;
-}
-";
-
-            var vd = new Veldrid.ShaderDescription(Veldrid.ShaderStages.Vertex, Encoding.ASCII.GetBytes(vertexShaderSource), "ColorVertexShader");
+        public static (ShaderSetDescription shaders,
+            ResourceLayout resourcelayout) 
+            CompileShaders(Veldrid.GraphicsDevice gd, string pixelShader, string pixelentrypoint, string vertexShader, string vertexentrypoint)
+        { 
+            var vd = new Veldrid.ShaderDescription(Veldrid.ShaderStages.Vertex, Encoding.ASCII.GetBytes(vertexShader),vertexentrypoint);
             var vertShader = gd.ResourceFactory.CreateShader(vd);
 
-            var pd = new Veldrid.ShaderDescription(Veldrid.ShaderStages.Fragment, Encoding.ASCII.GetBytes(pixelShaderSource), "ColorPixelShader");
+            var pd = new Veldrid.ShaderDescription(Veldrid.ShaderStages.Fragment, Encoding.ASCII.GetBytes(pixelShader), pixelentrypoint);
             var fragShader = gd.ResourceFactory.CreateShader(pd);
 
-            var vertshadercomp = SharpDX.D3DCompiler.ShaderBytecode.Compile(vertexShaderSource, "ColorVertexShader", "vs_4_0", SharpDX.D3DCompiler.ShaderFlags.None, SharpDX.D3DCompiler.EffectFlags.None, "vert");
-
-
+            //compile again to reflect.
+            var vertshadercomp = SharpDX.D3DCompiler.ShaderBytecode.Compile(vd.ShaderBytes, vd.EntryPoint, "vs_4_0", SharpDX.D3DCompiler.ShaderFlags.None, SharpDX.D3DCompiler.EffectFlags.None, "vert");
             SharpDX.D3DCompiler.ShaderReflection sr = new SharpDX.D3DCompiler.ShaderReflection(vertshadercomp.Bytecode);
             var outputvertexElementDescriptions = new List<VertexElementDescription>();
             for (int i = 0; i < sr.Description.InputParameters; i++)
@@ -139,8 +84,6 @@ float4 ColorPixelShader(PixelInputType input) : SV_TARGET
                     DetermineFormatFromVertexInputParam(inputparam)));
                 
             }
-
-
 
             //create shader layouts.
             var vertlayout = new VertexLayoutDescription(outputvertexElementDescriptions.ToArray()); /*new VertexLayoutDescription(
@@ -154,7 +97,16 @@ float4 ColorPixelShader(PixelInputType input) : SV_TARGET
                 //TODO for now we only support cubuffers....
                 //TODO we're only parsing vertex shaders so the stage is always vertex.
                 //TODO support a different flow for compute shaders...
-                outputResourceElements.Add(new ResourceLayoutElementDescription(cb.Description.Name, ResourceKind.UniformBuffer, ShaderStages.Vertex));
+                /* TODO - we could eventually parse the buffer types, find compatibile c# types and generate nodes or structs to hold this data
+                then we could validate the data users pass in.
+
+                for (int j = 0; j<cb.Description.VariableCount; j++)
+                {
+                    var cbvar = cb.GetVariable(j);
+                    var type = cbvar.GetVariableType();
+                    type.Description.
+                }*/
+                    outputResourceElements.Add(new ResourceLayoutElementDescription(cb.Description.Name, ResourceKind.UniformBuffer, ShaderStages.Vertex));
 
             }
             //setup buffer we'll pack with all our data.
@@ -164,7 +116,7 @@ float4 ColorPixelShader(PixelInputType input) : SV_TARGET
 
         }
 
-        private VertexElementFormat DetermineFormatFromVertexInputParam(ShaderParameterDescription paramDesc)
+        private static VertexElementFormat DetermineFormatFromVertexInputParam(ShaderParameterDescription paramDesc)
         {
             // determine DXGI format
             if ((int)paramDesc.UsageMask == 1)
@@ -198,7 +150,7 @@ float4 ColorPixelShader(PixelInputType input) : SV_TARGET
         public byte[] Test(uint width,uint height)
         {
             var gd = InitializeGraphicsDevice();
-            var resourcedata = CompileTestShaders(gd);
+            var resourcedata = CompileShaders(gd,pixelShaderSource, "ColorPixelShader", vertexShaderSource, "ColorVertexShader");
             var scene = GenerateRandomTestScene();
 
             var vertexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(scene.Count() *16), BufferUsage.VertexBuffer));
@@ -288,6 +240,67 @@ float4 ColorPixelShader(PixelInputType input) : SV_TARGET
         {
             return degrees * (float)Math.PI / 180f;
         }
+
+
+
+        static string vertexShaderSource = @"
+/////////////
+// GLOBALS //
+/////////////
+cbuffer MatrixBuffer
+{
+    matrix worldMatrix;
+    matrix viewMatrix;
+    matrix projectionMatrix;
+};
+//////////////
+// TYPEDEFS //
+//////////////
+struct VertexInputType
+{
+    float4 position : POSITION;
+    float4 color : COLOR;
+};
+
+struct PixelInputType
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Vertex Shader
+////////////////////////////////////////////////////////////////////////////////
+PixelInputType ColorVertexShader(VertexInputType input)
+{
+    PixelInputType output;
+    
+
+
+    // Calculate the position of the vertex against the world, view, and projection matrices.
+   output.position = mul(input.position, worldMatrix);
+   output.position = mul(output.position, viewMatrix);
+   output.position = mul(output.position, projectionMatrix);
+    // Store the input color for the pixel shader to use.
+    output.color = input.color;
+    return output;
+}
+
+";
+        static string pixelShaderSource = @"
+struct PixelInputType
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shader
+////////////////////////////////////////////////////////////////////////////////
+float4 ColorPixelShader(PixelInputType input) : SV_TARGET
+{
+    return input.color;
+}
+";
 
     }
 }

@@ -1,0 +1,422 @@
+{
+  "Uuid": "dc454b4d-e2b5-4cc5-9a50-559423e82460",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "rendershphere_simpleshader",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "DesignScript.Builtin.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      }
+    }
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Autodesk.DesignScript.Geometry.Sphere.ByCenterPointRadius@Autodesk.DesignScript.Geometry.Point,double",
+      "Id": "e880555f5f04452bbec826b69e9cfe53",
+      "Inputs": [
+        {
+          "Id": "ff041c0a4f804db58828b66c031abc10",
+          "Name": "centerPoint",
+          "Description": "Point\nDefault value : Autodesk.DesignScript.Geometry.Point.ByCoordinates(0, 0, 0)",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ed3ceb90e68942f5929795dee0291c54",
+          "Name": "radius",
+          "Description": "double\nDefault value : 1",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "621be8c75a7e4b859d4ba0317856ad78",
+          "Name": "Sphere",
+          "Description": "Sphere",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Create a Solid Sphere cetered at the input Point, with given radius.\n\nSphere.ByCenterPointRadius (centerPoint: Point = Autodesk.DesignScript.Geometry.Point.ByCoordinates(0, 0, 0), radius: double = 1): Sphere"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DynamoShaderNodes.ShadeGeometry.ByShadersAndData@Autodesk.DesignScript.Geometry.Geometry,string,string,var[]..[],int,int",
+      "Id": "2a80b996f3734575a458987b6993693c",
+      "Inputs": [
+        {
+          "Id": "ac3135cb543645c8b0b6266fb0db26db",
+          "Name": "geo",
+          "Description": "Geometry",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "9b5deca844e14d109916a90a13251d4b",
+          "Name": "pixel",
+          "Description": "string",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "a062e5c8108e404b9222cc57463fb758",
+          "Name": "vertex",
+          "Description": "string",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "4a4c677bc087414b9ed704506217a154",
+          "Name": "constantBufferData",
+          "Description": "var[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "6b5d6614b0cf44cb9f55b30b59517a31",
+          "Name": "width",
+          "Description": "int",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "96fa17396bd74ccf82cf78cff2dd447e",
+          "Name": "height",
+          "Description": "int",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "e49e4b0cca674e52b64361fef3c50362",
+          "Name": "var",
+          "Description": "var",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "ShadeGeometry.ByShadersAndData (geo: Geometry, pixel: string, vertex: string, constantBufferData: var[]..[], width: int, height: int): var"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "\"\ncbuffer MatrixBuffer\n{\n    matrix worldMatrix;\n    matrix viewMatrix;\n    matrix projectionMatrix;\n};\n//////////////\n// TYPEDEFS //\n//////////////\nstruct VertexInputType\n{\n    float4 position : POSITION;\n};\n\nstruct PixelInputType\n{\n    float4 position : SV_POSITION;\n\n};\n\n////////////////////////////////////////////////////////////////////////////////\n// Vertex Shader\n////////////////////////////////////////////////////////////////////////////////\nPixelInputType main(VertexInputType input)\n{\n PixelInputType output;\n    // Calculate the position of the vertex against the world, view, and projection matrices.\n   output.position = mul(input.position, worldMatrix);\n   output.position = mul(output.position, viewMatrix);\n   output.position = mul(output.position, projectionMatrix);\n   return output;\n}\n\n\";",
+      "Id": "aa30c80618ec449084a8f65dc074cbc0",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "b2fc317c61314ea5b780e0dd5dc84819",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "\"\nstruct PixelInputType\n{\n    float4 position : SV_POSITION;\n};\n////////////////////////////////////////////////////////////////////////////////\n// Pixel Shader\n////////////////////////////////////////////////////////////////////////////////\nfloat4 main(PixelInputType input) : SV_TARGET\n{\n    return float4(1,.3,.7,1.0);\n}\n\";",
+      "Id": "1563446e32404778b72970de9273c305",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "633a90fab34f446fafca1c1f106beea9",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "{};",
+      "Id": "fbb357dd0e5649948e84dfd4199d48f2",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "81bc0fe4068443e5bcc4f0f37f875dcd",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "800;\n600;",
+      "Id": "ce449bc988f74e90a7c1d904bf845fcf",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "d1e0511bafae40218041bd0420ddaace",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "60822b62df084c8f815ae6208b161bfb",
+          "Name": "",
+          "Description": "Value of expression at line 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.WatchImageCore, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "769dcceb43004a0fa09bb2b1635da7ed",
+      "Inputs": [
+        {
+          "Id": "56c68a64e58a41bfa20517522a35a17e",
+          "Name": "image",
+          "Description": "Image for visualization",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "20ebc2e3e2d54c53b030b88f8fc05cb7",
+          "Name": "image",
+          "Description": "Image for visualization",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Previews an image"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "621be8c75a7e4b859d4ba0317856ad78",
+      "End": "ac3135cb543645c8b0b6266fb0db26db",
+      "Id": "9ab27193024d4c5cbf00a8dcc8224581",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "e49e4b0cca674e52b64361fef3c50362",
+      "End": "56c68a64e58a41bfa20517522a35a17e",
+      "Id": "994acf53a30b431b9b861fb559feb91c",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "b2fc317c61314ea5b780e0dd5dc84819",
+      "End": "a062e5c8108e404b9222cc57463fb758",
+      "Id": "634688855c9740499e24d6ff48c06e80",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "633a90fab34f446fafca1c1f106beea9",
+      "End": "9b5deca844e14d109916a90a13251d4b",
+      "Id": "024b569e1ac74ae1bed676694a0fe925",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "81bc0fe4068443e5bcc4f0f37f875dcd",
+      "End": "4a4c677bc087414b9ed704506217a154",
+      "Id": "43c3eff737b54d58b7c1c40691e9fc4f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "d1e0511bafae40218041bd0420ddaace",
+      "End": "6b5d6614b0cf44cb9f55b30b59517a31",
+      "Id": "3e3d7ce605054a50881a4b3a58cf533a",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "60822b62df084c8f815ae6208b161bfb",
+      "End": "96fa17396bd74ccf82cf78cff2dd447e",
+      "Id": "eecb1a26382f499c8f49f7b9983042f9",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [
+    {
+      "Name": "Dynamo Shader Toy",
+      "Version": "1.0.0",
+      "ReferenceType": "Package",
+      "Nodes": [
+        "2a80b996f3734575a458987b6993693c"
+      ]
+    }
+  ],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "2.14",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.14.0.3747",
+      "RunType": "Automatic",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "Sphere.ByCenterPointRadius",
+        "ShowGeometry": true,
+        "Id": "e880555f5f04452bbec826b69e9cfe53",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 71.46143893944668,
+        "Y": 79.845540126587025
+      },
+      {
+        "Name": "ShadeGeometry.ByShadersAndData",
+        "ShowGeometry": true,
+        "Id": "2a80b996f3734575a458987b6993693c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 725.0,
+        "Y": 269.0
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "aa30c80618ec449084a8f65dc074cbc0",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -489.459911257162,
+        "Y": 373.753811396807
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "1563446e32404778b72970de9273c305",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -492.77644943812788,
+        "Y": 1113.2496264148051
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "fbb357dd0e5649948e84dfd4199d48f2",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 390.0,
+        "Y": 469.0
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "ce449bc988f74e90a7c1d904bf845fcf",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 443.69812832671232,
+        "Y": 714.16865806153692
+      },
+      {
+        "Name": "Watch Image",
+        "ShowGeometry": true,
+        "Id": "769dcceb43004a0fa09bb2b1635da7ed",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1135.2640248343168,
+        "Y": 325.30062986678161
+      }
+    ],
+    "Annotations": [],
+    "X": 398.06792721561004,
+    "Y": -30.859382010255672,
+    "Zoom": 0.62504036416830155
+  }
+}

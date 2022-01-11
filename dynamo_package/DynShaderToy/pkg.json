@@ -1,0 +1,15 @@
+{
+	"file_hash": null,
+	"name": "Dynamo Shader Toy",
+	"version": "1.0.0",
+	"description": "Dynamo shader nodes",
+	"group": "",
+	"keywords": [],
+	"dependencies": [],
+	"license": "MIT",
+	"contents": "",
+	"engine_version": "2.14.0",
+	"engine_metadata": "",
+	"engine": "dynamo",
+	"node_libraries": [ "DynamoShaderNodes, Version=1.0.0.0,Culture=neutral,PublicKeyToken=null"]
+}

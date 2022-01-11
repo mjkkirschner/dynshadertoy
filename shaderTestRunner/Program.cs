@@ -18,7 +18,7 @@ namespace shaderTestRunner
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World");
-            var x = new shadertoy();
+            var x = new ShaderToy();
             var image = x.Test(800,600);
 
             var handler = GetConsoleHandle();

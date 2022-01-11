@@ -3,9 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31112.23
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dynshadertoy", "dynshadertoy\dynshadertoy.csproj", "{376C0AA0-7C9D-4B88-BE9D-B1E3525C78DB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shadertoyCore", "dynshadertoy\shadertoyCore.csproj", "{376C0AA0-7C9D-4B88-BE9D-B1E3525C78DB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shaderTestRunner", "shaderTestRunner\shaderTestRunner.csproj", "{F819296F-0A5E-4B1B-AF1E-D2212146B47C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamoShaderNodes", "DynamoShaderNodes\DynamoShaderNodes.csproj", "{6EA5F548-692D-4097-976B-FB50BFF7C428}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4E09A58A-F7FA-48C2-9FD0-6D9CB3179F00}"
+	ProjectSection(SolutionItems) = preProject
+		dynamo_package\DynShaderToy\pkg.json = dynamo_package\DynShaderToy\pkg.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +28,10 @@ Global
 		{F819296F-0A5E-4B1B-AF1E-D2212146B47C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F819296F-0A5E-4B1B-AF1E-D2212146B47C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F819296F-0A5E-4B1B-AF1E-D2212146B47C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EA5F548-692D-4097-976B-FB50BFF7C428}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EA5F548-692D-4097-976B-FB50BFF7C428}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EA5F548-692D-4097-976B-FB50BFF7C428}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EA5F548-692D-4097-976B-FB50BFF7C428}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
