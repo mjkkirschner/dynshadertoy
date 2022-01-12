@@ -16,7 +16,12 @@ namespace DynamoShaderNodes.Numerics
         {
             return new Vector3((float)a.X, (float)a.Y, (float)a.Z);
         }
-       public static System.Numerics.Matrix4x4 ToMatrix4x4(this CoordinateSystem cs)
+        public static Vector4 ToVector4(this Autodesk.DesignScript.Geometry.Vector a)
+        {
+            return new Vector4((float)a.X, (float)a.Y, (float)a.Z,1f);
+        }
+
+        public static System.Numerics.Matrix4x4 ToMatrix4x4(this CoordinateSystem cs)
         {
             return new System.Numerics.Matrix4x4((float)cs.XAxis.X, (float)cs.XAxis.Y, (float)cs.XAxis.Z, (float)cs.XScaleFactor,
                (float)cs.YAxis.X, (float)cs.YAxis.Y, (float)cs.YAxis.Z, (float)cs.YScaleFactor,
